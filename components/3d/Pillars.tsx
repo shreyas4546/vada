@@ -11,6 +11,7 @@ declare global {
       mesh: any;
       boxGeometry: any;
       meshStandardMaterial: any;
+      meshPhysicalMaterial: any; // Added for PBR
       lineSegments: any;
       edgesGeometry: any;
       lineBasicMaterial: any;
@@ -23,6 +24,7 @@ declare global {
         mesh: any;
         boxGeometry: any;
         meshStandardMaterial: any;
+        meshPhysicalMaterial: any; // Added for PBR
         lineSegments: any;
         edgesGeometry: any;
         lineBasicMaterial: any;
@@ -75,16 +77,19 @@ const Pillar: React.FC<PillarProps> = ({ targetY, targetZ, height, position, del
   return (
     <mesh ref={meshRef} position={[position[0], startY, targetZ]}>
       <boxGeometry args={[3, height, 3]} />
-      {/* Deep matte black material */}
-      <meshStandardMaterial 
-        color="#020617" 
-        roughness={0.2} // Slightly rougher for matte look
-        metalness={0.8}
-        emissive="#0f172a" // Very subtle emissive
-        emissiveIntensity={0.1}
+      {/* Premium PBR Material */}
+      <meshPhysicalMaterial 
+        color="#0f172a"        // slate-900 base
+        roughness={0.2}        // Smooth but not perfect mirror
+        metalness={0.6}        // Metallic feel
+        clearcoat={1.0}        // Lacquered top coat
+        clearcoatRoughness={0.1}
+        reflectivity={1}
+        emissive="#1e1b4b"     // Deep indigo glow in shadows
+        emissiveIntensity={0.2}
       />
       {/* Edges for definition - slightly brighter to catch the eye */}
-      <Edges color="#475569" threshold={15} /> 
+      <Edges color="#64748b" threshold={15} /> 
     </mesh>
   );
 };

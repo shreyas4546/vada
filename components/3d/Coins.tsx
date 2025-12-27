@@ -37,11 +37,12 @@ const Coin = ({ startDelay }: { startDelay: number }) => {
   // P2: x=-1.8, y=-0.5, z=-4
   // P3: x=1.4,  y=1.5,  z=-2
   // P4: x=4.6,  y=3.5,  z=0
+  // Offset Y by 0.7 (0.6 radius + 0.1 tube thickness) to sit on top
   const waypoints = useMemo(() => [
-    new THREE.Vector3(-5, -1.9, -6),   // Top of P1 + 0.6
-    new THREE.Vector3(-1.8, 0.1, -4),  // Top of P2 + 0.6
-    new THREE.Vector3(1.4, 2.1, -2),   // Top of P3 + 0.6
-    new THREE.Vector3(4.6, 4.1, 0),    // Top of P4 + 0.6
+    new THREE.Vector3(-5, -1.8, -6),   // Top of P1 (-2.5) + 0.7
+    new THREE.Vector3(-1.8, 0.2, -4),  // Top of P2 (-0.5) + 0.7
+    new THREE.Vector3(1.4, 2.2, -2),   // Top of P3 (1.5) + 0.7
+    new THREE.Vector3(4.6, 4.2, 0),    // Top of P4 (3.5) + 0.7
   ], []);
 
   useFrame((state) => {
