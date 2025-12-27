@@ -11,7 +11,10 @@ declare global {
       group: any;
       mesh: any;
       torusGeometry: any;
+      sphereGeometry: any;
       meshBasicMaterial: any;
+      meshStandardMaterial: any;
+      pointLight: any;
     }
   }
   namespace React {
@@ -20,80 +23,90 @@ declare global {
         group: any;
         mesh: any;
         torusGeometry: any;
+        sphereGeometry: any;
         meshBasicMaterial: any;
+        meshStandardMaterial: any;
+        pointLight: any;
       }
     }
   }
 }
 
 export const PortalRing: React.FC = () => {
-  const torusRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
+  const mainRingRef = useRef<THREE.Mesh>(null);
+  const outerRingRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
-    if (torusRef.current) {
-      torusRef.current.rotation.x = state.clock.getElapsedTime() * 0.2;
-      torusRef.current.rotation.y = state.clock.getElapsedTime() * 0.1;
+    const t = state.clock.getElapsedTime();
+
+    // Rotate main liquid ring slowly
+    if (mainRingRef.current) {
+      mainRingRef.current.rotation.x = t * 0.15;
+      mainRingRef.current.rotation.y = t * 0.1;
     }
-    if (glowRef.current) {
-      glowRef.current.rotation.x = state.clock.getElapsedTime() * 0.2;
-      glowRef.current.rotation.y = state.clock.getElapsedTime() * 0.1;
-      // Pulse effect
-      const scale = 1 + Math.sin(state.clock.getElapsedTime() * 2) * 0.05;
-      glowRef.current.scale.set(scale, scale, scale);
+
+    // Rotate outer gyroscope ring on complex axes
+    if (outerRingRef.current) {
+      outerRingRef.current.rotation.x = Math.sin(t * 0.2) * 0.5;
+      outerRingRef.current.rotation.y = t * 0.05;
+      outerRingRef.current.rotation.z = Math.cos(t * 0.1) * 0.2;
     }
   });
 
   return (
-    <group>
-      {/* Background Ambience */}
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+    <group scale={0.9}>
+      <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
       
-      {/* Main Portal Ring */}
+      {/* Main Liquid Metal Portal Ring */}
       <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-        <mesh ref={torusRef}>
-          <torusGeometry args={[3.5, 0.8, 64, 128]} />
-          {/* Using MeshDistortMaterial for that liquid/organic futuristic feel */}
+        <mesh ref={mainRingRef}>
+          <torusGeometry args={[3.8, 0.7, 128, 128]} />
           <MeshDistortMaterial 
-            color="#1e1b4b" 
-            emissive="#4f46e5"
-            emissiveIntensity={0.5}
+            color="#0f172a" // slate-900
+            emissive="#312e81" // indigo-900
+            emissiveIntensity={0.8}
             roughness={0.1}
             metalness={1}
-            distort={0.3}
+            distort={0.4}
             speed={2}
-          />
-        </mesh>
-
-        {/* Wireframe Glow Overlay */}
-        <mesh ref={glowRef}>
-          <torusGeometry args={[3.6, 0.85, 64, 128]} />
-          <meshBasicMaterial 
-            color="#22d3ee" 
-            wireframe 
-            transparent 
-            opacity={0.1} 
           />
         </mesh>
       </Float>
 
-      {/* Floating Particles */}
+      {/* Outer Gyroscope Tech Ring (Ghostly) */}
+      <Float speed={1.5} rotationIntensity={1.5} floatIntensity={0.5}>
+        <mesh ref={outerRingRef}>
+            <torusGeometry args={[5.2, 0.02, 16, 100]} />
+            <meshStandardMaterial 
+                color="#ffffff"
+                emissive="#ffffff"
+                emissiveIntensity={0.5}
+                transparent
+                opacity={0.3}
+            />
+        </mesh>
+      </Float>
+
+      {/* Floating Debris / Data Particles */}
       <Sparkles 
-        count={200} 
+        count={300} 
         scale={10} 
-        size={4} 
+        size={3} 
         speed={0.4} 
-        opacity={0.5} 
+        opacity={0.6} 
         color="#a78bfa" // violet-400
       />
       <Sparkles 
         count={200} 
-        scale={12} 
-        size={2} 
-        speed={0.3} 
-        opacity={0.3} 
+        scale={15} 
+        size={1.5} 
+        speed={0.2} 
+        opacity={0.4} 
         color="#22d3ee" // cyan-400
       />
+      
+      {/* Inner Light Source to illuminate the rings from the inside */}
+      <pointLight position={[0, 0, 0]} intensity={5} distance={10} color="#6366f1" />
     </group>
   );
 };

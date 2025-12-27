@@ -2,10 +2,10 @@ import React, { Suspense, useEffect, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
 import * as THREE from 'three';
-import { PortalRing } from './PortalRing';
+import { Pillars } from './Pillars';
+import { Coins } from './Coins';
 
 // Fix for JSX element type errors in strict environments
-// Augmenting both global JSX and React.JSX to ensure compatibility
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -34,24 +34,14 @@ interface SceneProps {
 const ZoomHandler: React.FC = () => {
   const { camera } = useThree();
   // Initial target matches the camera's starting Z position
-  const targetZ = useRef(9);
+  const targetZ = useRef(14); // Started further back to fit the offset view
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      // Adjust zoom target based on scroll direction
-      // Sensitivity factor for scroll to zoom mapping
-      const sensitivity = 0.005;
-      
-      // Calculate new Z position
-      // e.deltaY > 0 (Scroll Down) -> Increases Z (Move Camera Back / Zoom Out)
-      // e.deltaY < 0 (Scroll Up) -> Decreases Z (Move Camera Forward / Zoom In)
-      // This creates a "receding" effect as you scroll down the page, providing more context.
+      const sensitivity = 0.01;
       const newZ = targetZ.current + (e.deltaY * sensitivity);
-      
-      // Clamp constraints:
-      // Min: 6 (Close up view)
-      // Max: 15 (Wide view)
-      targetZ.current = THREE.MathUtils.clamp(newZ, 6, 15);
+      // Clamp constraints adjusted for the new camera angle
+      targetZ.current = THREE.MathUtils.clamp(newZ, 10, 20);
     };
 
     window.addEventListener('wheel', handleWheel, { passive: true });
@@ -59,12 +49,10 @@ const ZoomHandler: React.FC = () => {
   }, []);
 
   useFrame((state, delta) => {
-    // Smoothly interpolate camera position using damp
-    // This creates a premium, weighted feel to the zoom
     state.camera.position.z = THREE.MathUtils.damp(
       state.camera.position.z,
       targetZ.current,
-      2.5, // Damping factor (smoothness)
+      2.5,
       delta
     );
   });
@@ -75,8 +63,9 @@ const ZoomHandler: React.FC = () => {
 // Camera rig component to handle subtle mouse parallax
 const CameraRig: React.FC<SceneProps> = ({ mouseX, mouseY }) => {
   return (
-    <group rotation={[mouseY * 0.1, mouseX * 0.1, 0]}>
-       <PortalRing />
+    <group rotation={[mouseY * 0.05, mouseX * 0.05, 0]}> {/* Reduced rotation intensity for stability */}
+       <Pillars />
+       <Coins />
     </group>
   )
 }
@@ -86,26 +75,38 @@ export const Scene: React.FC<SceneProps> = ({ mouseX, mouseY }) => {
     <div className="absolute inset-0 z-0 h-screen w-full">
       {/* 
         Camera Config:
-        - position: [0, -2, 9] -> Initial Hero Setup
-        - fov: 55 -> Cinematic Field of View
-        - rotation: [0.2, 0, 0] -> Tilted upwards
+        - position: [-6, 2, 14] 
+          - X = -6: Shifts the camera LEFT, which pushes the scene (at x=0) to the RIGHT side of the viewport.
+          - Y = 2: Slight elevation to look down at the steps.
+          - Z = 14: Zoomed out enough to see the progression.
+        - fov: 45 -> Slightly narrower for a more orthographic/studio feel.
       */}
-      <Canvas camera={{ position: [0, -2, 9], fov: 55, rotation: [0.2, 0, 0] }}>
+      <Canvas camera={{ position: [-6, 2, 14], fov: 45, rotation: [0, 0, 0] }}>
         <Suspense fallback={null}>
           <ZoomHandler />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} intensity={1} color="#c084fc" />
-          <pointLight position={[-10, -10, -10]} intensity={1} color="#22d3ee" />
+          
+          {/* Lighting - Darker ambient for high contrast */}
+          <ambientLight intensity={0.2} />
+          
+          {/* Main Key Light (Cyan) - From bottom left relative to objects */}
+          <pointLight position={[-5, -5, 5]} intensity={2} color="#22d3ee" distance={20} />
+          
+          {/* Rim Light (Violet) - From top right back */}
+          <pointLight position={[10, 10, -5]} intensity={2.5} color="#c084fc" distance={30} />
+          
+          {/* Top Fill - subtle white */}
+          <pointLight position={[0, 10, 5]} intensity={0.5} color="#ffffff" />
           
           <CameraRig mouseX={mouseX} mouseY={mouseY} />
           
-          {/* Subtle studio environment reflection */}
-          <Environment preset="city" />
+          {/* Studio Environment - dark city reflections */}
+          <Environment preset="city" environmentIntensity={0.5} />
         </Suspense>
       </Canvas>
       
-      {/* Gradient Overlay to blend canvas with background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/20 to-slate-950 pointer-events-none" />
+      {/* Gradient Overlay - Left side darker to ensure text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-950 pointer-events-none" />
     </div>
   );
 };
